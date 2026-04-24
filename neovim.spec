@@ -1,20 +1,18 @@
-%bcond_with jemalloc
+%bcond_without jemalloc
 %bcond_without luajit
 
 Name:           neovim
-Version:        0.3.7.0.git.11455.078f8d716
+Version:        0.12.2
 Release:        1%{?dist}
 
-License:        ASL 2.0
+License:        Apache-2.0
 Summary:        Vim-fork focused on extensibility and agility
-Url:            http://neovim.io
+URL:            https://neovim.io
 
-Source0:        neovim-0.3.7.0.git.11455.078f8d716.tar.gz
+Source0:        https://github.com/neovim/neovim/archive/v%{version}/%{name}-%{version}.tar.gz
 Source1:        sysinit.vim
 Source2:        spec-template
-%if ! %{with luajit}
-Patch0:         neovim-0.1.7-bitop.patch
-%endif
+# bitop patch removed - was for neovim 0.1.7, not needed for 0.12.2+
 
 BuildRequires:  gcc-c++
 BuildRequires:  cmake
@@ -27,8 +25,8 @@ BuildRequires:  gcc
 # luajit implements version 5.1 of the lua language spec, so it needs the
 # compat versions of libs.
 BuildRequires:  luajit-devel
-#BuildRequires:  compat-lua-lpeg
-#BuildRequires:  compat-lua-mpack
+BuildRequires:  lua-lpeg
+BuildRequires:  lua-mpack
 BuildRequires:  lua-devel
 %else
 BuildRequires:  lua-devel
@@ -42,19 +40,20 @@ BuildRequires:  msgpack-devel >= 1.2.0
 BuildRequires:  libtermkey-devel
 BuildRequires:  libuv-devel
 BuildRequires:  libvterm-devel
+# libtree-sitter-devel is only available on EL9+/Fedora
+%if 0%{?rhel} >= 9 || 0%{?fedora}
+BuildRequires:  libtree-sitter-devel
+%endif
 BuildRequires:  unibilium-devel
-%if 0%{?el7}
-BuildRequires:  lua-bit32
-Requires:       lua-bit32
-BuildRequires:  lua-devel
-BuildRequires:  lua-lpeg
-BuildRequires:  lua-lpeg
-Requires: xsel
-%else
-Suggests:       (python2-neovim if python2)
-Suggests:       (python3-neovim if python3)
-# XSel provides access to the system clipboard
+
+Obsoletes:      neovim < %{version}-%{release}
+Recommends:     python3-pynvim
+# Clipboard providers: X11 (xsel/xclip) and Wayland (wl-clipboard)
 Recommends:     xsel
+Recommends:     xclip
+# wl-clipboard (Wayland) is only available on EL8+/Fedora
+%if 0%{?rhel} >= 8 || 0%{?fedora}
+Recommends:     wl-clipboard
 %endif
 
 %description
@@ -68,7 +67,7 @@ excisions, Neovim is Vim. It is built for users who want the good
 parts of Vim, without compromise, and more.
 
 %prep
-%setup -q -n neovim-0.3.7.0.git.11455.078f8d716
+%autosetup -n %{name}-%{version}
 
 %build
 mkdir -p build
@@ -77,6 +76,17 @@ pushd build
        -DPREFER_LUA=%{?with_luajit:OFF}%{!?with_luajit:ON} \
        -DLUA_PRG=%{_bindir}/%{?with_luajit:luajit}%{!?with_luajit:lua} \
        -DENABLE_JEMALLOC=%{?with_jemalloc:ON}%{!?with_jemalloc:OFF} \
+       -DENABLE_LIBINTL=ON \
+       -DENABLE_LIBUV=ON \
+       -DENABLE_MSGPACK=ON \
+       -DENABLE_UNIBILIUM=ON \
+       -DENABLE_LIBTERMKEY=ON \
+       -DENABLE_LIBVTERM=ON \
+%if 0%{?rhel} >= 9 || 0%{?fedora}
+       -DENABLE_TREESITTER=ON \
+%else
+       -DENABLE_TREESITTER=OFF \
+%endif
        ..
 
 %make_build VERBOSE=1
@@ -109,6 +119,17 @@ install -m0644 runtime/nvim.png %{buildroot}%{_datadir}/pixmaps/nvim.png
 
 
 %changelog
+* Fri Apr 24 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 0.12.2-1
+- Update to 0.12.2
+- Switch from git snapshot to release tarball
+- Modernize spec for EL10
+- Enable jemalloc by default (%bcond_without)
+- Add libtree-sitter-devel BuildRequires for tree-sitter support
+- Add lua-lpeg and lua-mpack BuildRequires for luajit path
+- Add explicit cmake flags for all optional dependencies
+- Promote python3-pynvim from Suggests to Recommends
+- Add xclip and wl-clipboard to Recommends for full clipboard coverage
+
 * Wed Jun 05 2019 Aron Griffis <aron@scampersand.com> - 0.3.7.0.git.11455.078f8d716-1
 - Nightly build from git master
 
