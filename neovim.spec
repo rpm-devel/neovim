@@ -47,8 +47,8 @@ BuildRequires:  libtree-sitter-devel
 BuildRequires:  unibilium-devel
 
 Obsoletes:      neovim < %{version}-%{release}
+Requires:       python3-pynvim
 %if 0%{?rhel} >= 8 || 0%{?fedora}
-Recommends:     python3-pynvim
 # Clipboard providers: X11 (xsel/xclip) and Wayland (wl-clipboard)
 Recommends:     xsel
 Recommends:     xclip
@@ -120,6 +120,7 @@ install -m0644 runtime/nvim.png %{buildroot}%{_datadir}/pixmaps/nvim.png
 
 %changelog
 * Fri May 22 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 0.12.2-1
+- Promote python3-pynvim from Recommends to hard Requires
 - Wrap Recommends lines in EL8+/Fedora guard
 
 * Fri Apr 24 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 0.12.2-1
