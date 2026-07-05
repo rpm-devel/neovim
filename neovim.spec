@@ -8,8 +8,9 @@ Release:        1%{?dist}
 License:        Apache-2.0
 Summary:        Vim-fork focused on extensibility and agility
 URL:            https://neovim.io
+ExclusiveArch:  x86_64 aarch64
 
-Source0:        https://github.com/neovim/neovim/archive/v%{version}/%{name}-%{version}.tar.gz
+Source0:        https://github.com/neovim/neovim/archive/refs/tags/v%{version}.tar.gz
 Source1:        sysinit.vim
 Source2:        spec-template
 # bitop patch removed - was for neovim 0.1.7, not needed for 0.12.2+
@@ -48,13 +49,10 @@ BuildRequires:  unibilium-devel
 
 Obsoletes:      neovim < %{version}-%{release}
 Requires:       python3-pynvim
-%if 0%{?rhel} >= 8 || 0%{?fedora}
 # Clipboard providers: X11 (xsel/xclip) and Wayland (wl-clipboard)
 Recommends:     xsel
 Recommends:     xclip
-# wl-clipboard (Wayland) is only available on EL8+/Fedora
 Recommends:     wl-clipboard
-%endif
 
 %description
 Neovim is a refactor - and sometimes redactor - in the tradition of
@@ -119,6 +117,13 @@ install -m0644 runtime/nvim.png %{buildroot}%{_datadir}/pixmaps/nvim.png
 
 
 %changelog
+* Sat Jul 05 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 0.12.2-1
+- Source0: use refs/tags/ GitHub archive URL (verified 302→200)
+- Drop EL8+ guard around Recommends (always true on EL8+)
+
+* Thu Jul 03 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 0.12.2-1
+- Add ExclusiveArch: x86_64 aarch64
+
 * Fri May 22 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 0.12.2-1
 - Promote python3-pynvim from Recommends to hard Requires
 - Wrap Recommends lines in EL8+/Fedora guard
