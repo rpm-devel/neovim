@@ -22,33 +22,56 @@ BuildRequires:  fdupes
 BuildRequires:  gettext
 BuildRequires:  gperf
 BuildRequires:  gcc
+
+# openSUSE/SLES ship version-suffixed lua packages (e.g. lua54-devel)
+# instead of the unversioned lua-devel/lua-lpeg/lua-mpack used on
+# RHEL/Fedora; msgpack-devel is packaged as msgpack-c-devel on SUSE.
+%if 0%{?suse_version}
+%global lua_devel_pkg lua54-devel
+%global lua_lpeg_pkg  lua54-lpeg
+%global lua_mpack_pkg lua54-mpack
+%global msgpack_devel_pkg msgpack-c-devel
+%else
+%global lua_devel_pkg lua-devel
+%global lua_lpeg_pkg  lua-lpeg
+%global lua_mpack_pkg lua-mpack
+%global msgpack_devel_pkg msgpack-devel
+%endif
+
 %if %{with luajit}
 # luajit implements version 5.1 of the lua language spec, so it needs the
 # compat versions of libs.
 BuildRequires:  luajit-devel
-BuildRequires:  lua-lpeg
-BuildRequires:  lua-mpack
-BuildRequires:  lua-devel
+BuildRequires:  %{lua_lpeg_pkg}
+BuildRequires:  %{lua_mpack_pkg}
+BuildRequires:  %{lua_devel_pkg}
 %else
-BuildRequires:  lua-devel
-BuildRequires:  lua-lpeg
-BuildRequires:  lua-mpack
+BuildRequires:  %{lua_devel_pkg}
+BuildRequires:  %{lua_lpeg_pkg}
+BuildRequires:  %{lua_mpack_pkg}
 %endif
 %if %{with jemalloc}
 BuildRequires:  jemalloc-devel
 %endif
-BuildRequires:  msgpack-devel >= 1.2.0
+BuildRequires:  %{msgpack_devel_pkg} >= 1.2.0
 BuildRequires:  libtermkey-devel
 BuildRequires:  libuv-devel
 BuildRequires:  libvterm-devel
-# libtree-sitter-devel is only available on EL9+/Fedora
+# libtree-sitter-devel is only available on EL9+/Fedora; SUSE's tree-sitter
+# devel subpackage naming could not be verified with confidence, so it is
+# left unguarded/disabled there rather than guessed.
 %if 0%{?rhel} >= 9 || 0%{?fedora}
 BuildRequires:  libtree-sitter-devel
 %endif
 BuildRequires:  unibilium-devel
 
 Obsoletes:      neovim < %{version}-%{release}
+# python3-pynvim is packaged as python3-neovim on openSUSE/SLES
+%if 0%{?suse_version}
+Requires:       python3-neovim
+%else
 Requires:       python3-pynvim
+%endif
 # Clipboard providers: X11 (xsel/xclip) and Wayland (wl-clipboard)
 Recommends:     xsel
 Recommends:     xclip
@@ -117,6 +140,16 @@ install -m0644 runtime/nvim.png %{buildroot}%{_datadir}/pixmaps/nvim.png
 
 
 %changelog
+* Sat Jul 05 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 0.12.2-1
+- Guard lua-devel/lua-lpeg/lua-mpack as lua54-devel/lua54-lpeg/lua54-mpack
+  on openSUSE/SLES (version-suffixed lua packaging there)
+- Guard msgpack-devel as msgpack-c-devel on openSUSE/SLES
+- Guard python3-pynvim Requires as python3-neovim on openSUSE/SLES
+- Verified libtermkey-devel, unibilium-devel, libuv-devel, libvterm-devel,
+  jemalloc-devel, luajit-devel, gperf, fdupes, desktop-file-utils use the
+  same package names on openSUSE/SLES; left tree-sitter devel unguarded
+  there since its SUSE subpackage name could not be verified with confidence
+
 * Sat Jul 05 2026 CasjaysDev <rpm-devel@casjaysdev.pro> - 0.12.2-1
 - Source0: use refs/tags/ GitHub archive URL (verified 302→200)
 - Drop EL8+ guard around Recommends (always true on EL8+)
